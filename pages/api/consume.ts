@@ -1,10 +1,10 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import Database from "@/libs/db";
+import Database, { Record } from "@/libs/db";
 import type { NextApiRequest, NextApiResponse } from "next";
 import path from "path";
 
 type Data = {
-  data: any[];
+  data: Record[];
 };
 
 export default function handler(
@@ -15,6 +15,5 @@ export default function handler(
   const db = new Database(filePath);
   const records = db.consumeRecords();
 
-  console.log("records:");
   res.status(200).json({ data: records });
 }

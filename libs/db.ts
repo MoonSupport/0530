@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-type Record = {
+export type Record = {
   id: number;
   data: any;
 };

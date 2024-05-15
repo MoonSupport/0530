@@ -1,25 +1,23 @@
 import Image from "next/image";
 import { Inter } from "next/font/google";
 import { useEffect } from "react";
-import Queue from "@/libs/queue";
-import useAudio from "@/libs/audio";
-
-// JavaScript
-// Wrap the native DOM audio element play function and handle any autoplay errors
+import useAudio, { Audio } from "@/libs/audio";
 
 const inter = Inter({ subsets: ["latin"] });
 
+type Record = {
+  id: number;
+  data: any;
+};
+
 export default function Home() {
-  const queue = new Queue<number>();
-  const audio = useAudio("/1.mp3", () => {
-    queue.dequeue();
-  });
+  const playlist = useAudio();
 
   useEffect(() => {
     const id = setInterval(() => {
       queueMicrotask(() => {
-        if (!queue.isEmpty() && !audio.isPlay) {
-          audio.play();
+        if (!playlist.isEmpty() && !playlist.isPlay) {
+          playlist.play();
         }
       });
     });
@@ -31,9 +29,10 @@ export default function Home() {
   useEffect(() => {
     const id = setInterval(() => {
       fetch("http://localhost:3000/api/consume").then(async (v) => {
-        const json = await v.json();
-
-        json.data.forEach((v) => queue.enqueue(v));
+        const { data } = await v.json();
+        data.forEach((v: Record) => {
+          playlist.on(`/${v.data}`);
+        });
       });
     }, 1000);
 
@@ -46,7 +45,6 @@ export default function Home() {
     <main
       className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
     >
-      {queue.size()}
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
         <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
           Get started by editing&nbsp;

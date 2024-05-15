@@ -1,37 +1,51 @@
-import { useEffect, useRef } from "react";
+import Queue from "./queue";
 
-interface Audio {
-  play: () => void;
-  isPlay: boolean;
+export interface Audio {
+  filename: string;
+  audio: HTMLAudioElement;
+  trigger: HTMLButtonElement;
 }
 
-const useAudio = (filename: string, onended: () => void): Audio => {
-  const ref = useRef<HTMLButtonElement | null>(null);
-  const isPlay = useRef<boolean>(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+const useAudio = () => {
+  const playlist = new Queue<Audio>();
+  let isPlay = false;
 
-  useEffect(() => {
-    audioRef.current = new Audio(filename);
+  const on = (filename: string) => {
+    const top = playlist.peek();
+    if (top?.filename === filename) return;
+
+    const audio = new Audio(filename);
 
     const button = document.createElement("button");
-    ref.current = button;
     document.body.appendChild(button);
 
-    button.onclick = () => {
-      audioRef.current?.play();
+    audio.onended = () => {
+      isPlay = false;
+      const audio = playlist.dequeue();
+      const trigger = audio?.trigger;
+      if (trigger) document.body.removeChild(trigger);
     };
 
-    audioRef.current.onended = () => {
-      isPlay.current = false;
-      onended();
-    };
-  }, []);
+    playlist.enqueue({
+      audio,
+      trigger: button,
+      filename,
+    });
+  };
 
   return {
+    on,
+    isEmpty: () => playlist.isEmpty(),
     play: () => {
-      ref.current?.click();
+      const audio = playlist.peek();
+      if (!audio) throw new Error("No Exist Auido");
+
+      audio.audio.play();
     },
-    isPlay: isPlay.current,
+    isPlay,
+    get: () => {
+      return playlist;
+    },
   };
 };
 
