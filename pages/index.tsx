@@ -1,13 +1,82 @@
 import Image from "next/image";
 import { Inter } from "next/font/google";
+import { useEffect } from "react";
+import Queue from "@/libs/queue";
+
+// JavaScript
+// Wrap the native DOM audio element play function and handle any autoplay errors
 
 const inter = Inter({ subsets: ["latin"] });
 
+let play = false;
+
 export default function Home() {
+  const queue = new Queue<number>();
+
+  useEffect(() => {
+    Audio.prototype.play = (function (play) {
+      return function () {
+        var audio = this,
+          args = arguments,
+          promise = play.apply(audio, args);
+        if (promise !== undefined) {
+          promise.catch((_) => {
+            // Autoplay was prevented. This is optional, but add a button to start playing.
+            var el = document.createElement("button");
+            el.innerHTML = "Play";
+            el.addEventListener("click", function () {
+              play.apply(audio, args);
+            });
+            this.parentNode.insertBefore(el, this.nextSibling);
+          });
+        }
+      };
+    })(Audio.prototype.play);
+
+    const id = setInterval(() => {
+      queueMicrotask(() => {
+        console.log("queue", queue.isEmpty(), play);
+        if (!queue.isEmpty() && !play) {
+          play = true;
+          const v = queue.dequeue();
+          const audio = new Audio("/1.mp3");
+          if (!audio) throw new Error("");
+          new Promise((resolve) => resolve(audio)).then((_audio) =>
+            _audio.play()
+          );
+
+          audio.onended = () => {
+            play = false;
+          };
+        }
+      });
+    });
+    return () => {
+      clearInterval(id);
+    };
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      fetch("http://localhost:3000/api/consume").then(async (v) => {
+        const json = await v.json();
+        console.log("json");
+
+        json.data.forEach((v) => queue.enqueue(v));
+      });
+      console.log(queue.size());
+    }, 2000);
+
+    return () => {
+      clearInterval(id);
+    };
+  }, []);
+
   return (
     <main
       className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
     >
+      {queue.size()}
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
         <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
           Get started by editing&nbsp;
