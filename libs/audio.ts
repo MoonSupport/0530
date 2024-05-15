@@ -43,9 +43,6 @@ const useAudio = () => {
       audio.audio.play();
     },
     isPlay,
-    get: () => {
-      return playlist;
-    },
   };
 };
 
