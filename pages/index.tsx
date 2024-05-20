@@ -12,8 +12,11 @@ type Record = {
 
 export default function Home() {
   const playlist = useAudio({
-    "1": "1.mp3",
-    "2": "2.mp3",
+    "1": "노아.mp3",
+    "2": "밤비.mp3",
+    "3": "예준.mp3",
+    "4": "은호.mp3",
+    "5": "하민.mp3",
   });
 
   useEffect(() => {
@@ -46,7 +49,7 @@ export default function Home() {
     <main
       className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
     >
-      {playlist.currentMusic === "1" ? "1" : "노래 안함"}
+      {playlist.currentMusic}
     </main>
   );
 }
